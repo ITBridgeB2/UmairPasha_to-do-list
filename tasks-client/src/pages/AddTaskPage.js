@@ -9,32 +9,45 @@ export default function TaskManagerApp() {
   const [showModal, setShowModal] = useState(false);
   const [completedTask, setCompletedTask] = useState(null);
 
-  const fetchTasks = () => {
-    axios.get('http://localhost:5000/tasks').then(res => setTasks(res.data));
-  };
-
   useEffect(() => {
     fetchTasks();
-  }, [activeTab]);
+  }, []);
+
+  const fetchTasks = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/tasks');
+      setTasks(res.data);
+    } catch (err) {
+      console.error('Error fetching tasks', err);
+    }
+  };
 
   const handleAdd = async () => {
+    if (!title.trim()) {
+      alert('Title is required');
+      return;
+    }
+
     try {
-      if (!title.trim()) {
-        alert('Title is required');
-        return;
-      }
       await axios.post('http://localhost:5000/tasks', { title, description });
       alert('Task added!');
       setTitle('');
       setDescription('');
-    } catch {
+      fetchTasks(); // Refresh list
+    } catch (err) {
       alert('Error adding task');
+      console.error(err);
     }
   };
 
-  const deleteTask = async id => {
-    await axios.delete(`http://localhost:5000/tasks/${id}`);
-    fetchTasks();
+  const deleteTask = async (id) => {
+    try {
+      await axios.delete(`http://localhost:5000/tasks/${id}`);
+      fetchTasks();
+    } catch (err) {
+      alert('Error deleting task');
+      console.error(err);
+    }
   };
 
   const markAsComplete = async (id, taskTitle) => {
@@ -43,14 +56,15 @@ export default function TaskManagerApp() {
       setCompletedTask(taskTitle);
       setShowModal(true);
       fetchTasks();
-    } catch {
+    } catch (err) {
       alert('Error marking task as complete');
+      console.error(err);
     }
   };
 
   return (
     <div style={{ padding: '40px', maxWidth: '800px', margin: '50px auto', fontFamily: 'Arial' }}>
-      {/* Navigation Buttons */}
+      {/* Navigation */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '30px', gap: '10px' }}>
         {['add', 'manage', 'list'].map(tab => (
           <button
@@ -65,7 +79,6 @@ export default function TaskManagerApp() {
               cursor: 'pointer',
               fontWeight: '600',
               fontSize: '16px',
-              transition: '0.3s',
               textTransform: 'capitalize',
             }}
           >
@@ -74,63 +87,32 @@ export default function TaskManagerApp() {
         ))}
       </div>
 
-      {/* Add Task Page */}
+      {/* Add Task */}
       {activeTab === 'add' && (
-        <div
-          style={{
-            backgroundColor: '#fff',
-            borderRadius: '8px',
-            padding: '30px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          }}
-        >
+        <div style={{ backgroundColor: '#fff', borderRadius: '8px', padding: '30px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}>
           <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Add New Task</h2>
           <input
             placeholder="Enter task title"
             value={title}
-            onChange={e => setTitle(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              marginBottom: '20px',
-              borderRadius: '6px',
-              border: '1px solid #ccc',
-              fontSize: '16px',
-            }}
+            onChange={(e) => setTitle(e.target.value)}
+            style={{ width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px' }}
           />
           <textarea
             placeholder="Enter task description"
             value={description}
-            onChange={e => setDescription(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              marginBottom: '20px',
-              borderRadius: '6px',
-              border: '1px solid #ccc',
-              fontSize: '16px',
-              minHeight: '100px',
-            }}
+            onChange={(e) => setDescription(e.target.value)}
+            style={{ width: '100%', padding: '12px', marginBottom: '20px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '16px', minHeight: '100px' }}
           />
           <button
             onClick={handleAdd}
-            style={{
-              width: '100%',
-              backgroundColor: '#007BFF',
-              color: '#fff',
-              padding: '12px',
-              borderRadius: '6px',
-              border: 'none',
-              fontSize: '16px',
-              cursor: 'pointer',
-            }}
+            style={{ width: '100%', backgroundColor: '#007BFF', color: '#fff', padding: '12px', borderRadius: '6px', border: 'none', fontSize: '16px', cursor: 'pointer' }}
           >
             Add Task
           </button>
         </div>
       )}
 
-      {/* Manage Tasks Page */}
+      {/* Manage Tasks */}
       {activeTab === 'manage' && (
         <div>
           {tasks.length === 0 ? (
@@ -156,29 +138,14 @@ export default function TaskManagerApp() {
                   {!task.completed && (
                     <button
                       onClick={() => markAsComplete(task.id, task.title)}
-                      style={{
-                        backgroundColor: '#4CAF50',
-                        color: '#fff',
-                        border: 'none',
-                        padding: '8px 16px',
-                        borderRadius: '5px',
-                        cursor: 'pointer',
-                        marginRight: '10px',
-                      }}
+                      style={{ backgroundColor: '#4CAF50', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '5px', cursor: 'pointer', marginRight: '10px' }}
                     >
                       Mark as Complete
                     </button>
                   )}
                   <button
                     onClick={() => deleteTask(task.id)}
-                    style={{
-                      backgroundColor: '#F44336',
-                      color: '#fff',
-                      border: 'none',
-                      padding: '8px 16px',
-                      borderRadius: '5px',
-                      cursor: 'pointer',
-                    }}
+                    style={{ backgroundColor: '#F44336', color: '#fff', border: 'none', padding: '8px 16px', borderRadius: '5px', cursor: 'pointer' }}
                   >
                     Delete
                   </button>
@@ -189,7 +156,7 @@ export default function TaskManagerApp() {
         </div>
       )}
 
-      {/* List Tasks Page (View-Only) */}
+      {/* List Tasks */}
       {activeTab === 'list' && (
         <div>
           {tasks.length === 0 ? (
@@ -198,22 +165,11 @@ export default function TaskManagerApp() {
             tasks.map(task => (
               <div
                 key={task.id}
-                style={{
-                  backgroundColor: '#fefefe',
-                  padding: '20px',
-                  marginBottom: '10px',
-                  border: '1px solid #ddd',
-                  borderRadius: '8px',
-                }}
+                style={{ backgroundColor: '#fefefe', padding: '20px', marginBottom: '10px', border: '1px solid #ddd', borderRadius: '8px' }}
               >
                 <h4 style={{ marginBottom: '5px' }}>{task.title}</h4>
                 <p style={{ marginBottom: '5px' }}>{task.description}</p>
-                <span
-                  style={{
-                    fontWeight: 'bold',
-                    color: task.completed ? '#2E7D32' : '#C62828',
-                  }}
-                >
+                <span style={{ fontWeight: 'bold', color: task.completed ? '#2E7D32' : '#C62828' }}>
                   {task.completed ? '✅ Completed' : '❌ Incomplete'}
                 </span>
               </div>
@@ -223,7 +179,7 @@ export default function TaskManagerApp() {
       )}
 
       {/* Completion Modal */}
-      {showModal && (
+      {showModal && completedTask && (
         <div
           style={{
             position: 'fixed',

@@ -5,7 +5,17 @@ export default function TaskListPage() {
   const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:5000/tasks').then(res => setTasks(res.data));
+    const fetchTasks = async () => {
+      try {
+        const res = await axios.get('http://localhost:5000/tasks');
+        setTasks(res.data);
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+        alert('Failed to load tasks');
+      }
+    };
+
+    fetchTasks();
   }, []);
 
   return (
@@ -30,55 +40,42 @@ export default function TaskListPage() {
       >
         Task List
       </h2>
-      <ul
-        style={{
-          listStyleType: 'none',
-          padding: 0,
-        }}
-      >
-        {tasks.map(task => (
-          <li
-            key={task.id}
-            style={{
-              border: '1px solid #ddd',
-              padding: '15px',
-              marginBottom: '10px',
-              borderRadius: '6px',
-              backgroundColor: '#fafafa',
-              boxShadow: '0 1px 4px rgba(0, 0, 0, 0.1)',
-              transition: 'background-color 0.3s',
-            }}
-          >
-            <div
+
+      {tasks.length === 0 ? (
+        <p style={{ textAlign: 'center', color: '#888' }}>No tasks available.</p>
+      ) : (
+        <ul style={{ listStyleType: 'none', padding: 0 }}>
+          {tasks.map(task => (
+            <li
+              key={task.id}
               style={{
-                fontSize: '18px',
-                fontWeight: '500',
-                color: '#333',
-              }}
-            >
-              {task.title}
-            </div>
-            <div
-              style={{
-                fontSize: '14px',
-                color: '#666',
+                border: '1px solid #ddd',
+                padding: '15px',
                 marginBottom: '10px',
+                borderRadius: '6px',
+                backgroundColor: '#fafafa',
+                boxShadow: '0 1px 4px rgba(0, 0, 0, 0.1)',
               }}
             >
-              {task.description}
-            </div>
-            <div
-              style={{
-                fontSize: '14px',
-                fontWeight: '500',
-                color: task.completed ? '#4CAF50' : '#F44336',
-              }}
-            >
-              Status: {task.completed ? '✅ Completed' : '❌ Incomplete'}
-            </div>
-          </li>
-        ))}
-      </ul>
+              <div style={{ fontSize: '18px', fontWeight: '500', color: '#333' }}>
+                {task.title}
+              </div>
+              <div style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>
+                {task.description}
+              </div>
+              <div
+                style={{
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  color: task.completed ? '#4CAF50' : '#F44336',
+                }}
+              >
+                Status: {task.completed ? '✅ Completed' : '❌ Incomplete'}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

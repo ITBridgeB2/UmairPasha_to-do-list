@@ -3,11 +3,17 @@ import axios from 'axios';
 
 export default function ManageTasksPage() {
   const [tasks, setTasks] = useState([]);
-  const [showModal, setShowModal] = useState(false);  // State to show/hide the modal
-  const [completedTask, setCompletedTask] = useState(null);  // To store the task marked as complete
+  const [showModal, setShowModal] = useState(false);
+  const [completedTask, setCompletedTask] = useState(null);
 
-  const fetchTasks = () => {
-    axios.get('http://localhost:5000/tasks').then(res => setTasks(res.data));
+  const fetchTasks = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/tasks');
+      setTasks(res.data);
+    } catch (err) {
+      console.error('Error fetching tasks:', err);
+      alert('Failed to fetch tasks');
+    }
   };
 
   useEffect(() => {
@@ -15,24 +21,25 @@ export default function ManageTasksPage() {
   }, []);
 
   const deleteTask = async (id) => {
-    await axios.delete(`http://localhost:5000/tasks/${id}`);
-    fetchTasks();
+    try {
+      await axios.delete(`http://localhost:5000/tasks/${id}`);
+      fetchTasks();
+    } catch (err) {
+      console.error('Error deleting task:', err);
+      alert('Failed to delete task');
+    }
   };
 
   const markAsComplete = async (id, title) => {
     try {
       await axios.put(`http://localhost:5000/tasks/${id}`, { completed: true });
-      setCompletedTask(title); // Show the task title in modal
-      setShowModal(true); // Trigger the modal
-      fetchTasks(); // Refresh the list
-    } catch (error) {
-      console.error(error.response ? error.response.data : error.message);
+      setCompletedTask(title);
+      setShowModal(true);
+      fetchTasks();
+    } catch (err) {
+      console.error('Error completing task:', err);
       alert('Error marking task as complete');
     }
-  };
-  
-  const closeModal = () => {
-    setShowModal(false); // Close the modal
   };
 
   return (
@@ -46,17 +53,10 @@ export default function ManageTasksPage() {
         boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
       }}
     >
-      <h2
-        style={{
-          fontSize: '24px',
-          fontWeight: '600',
-          color: '#333',
-          marginBottom: '20px',
-          textAlign: 'center',
-        }}
-      >
+      <h2 style={{ fontSize: '24px', fontWeight: '600', textAlign: 'center', marginBottom: '20px' }}>
         Manage Tasks
       </h2>
+
       {tasks.length === 0 ? (
         <p style={{ textAlign: 'center', color: '#666' }}>No tasks available</p>
       ) : (
@@ -70,29 +70,10 @@ export default function ManageTasksPage() {
               borderRadius: '8px',
               backgroundColor: '#f9f9f9',
               boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
-              transition: 'background-color 0.3s',
             }}
-            onMouseEnter={(e) => (e.target.style.backgroundColor = '#f1f1f1')}
-            onMouseLeave={(e) => (e.target.style.backgroundColor = '#f9f9f9')}
           >
-            <div
-              style={{
-                fontSize: '20px',
-                fontWeight: '600',
-                color: '#333',
-              }}
-            >
-              {task.title}
-            </div>
-            <div
-              style={{
-                fontSize: '14px',
-                color: '#666',
-                marginBottom: '15px',
-              }}
-            >
-              {task.description}
-            </div>
+            <div style={{ fontSize: '20px', fontWeight: '600', color: '#333' }}>{task.title}</div>
+            <div style={{ fontSize: '14px', color: '#666', marginBottom: '15px' }}>{task.description}</div>
             <div
               style={{
                 fontSize: '14px',
@@ -106,7 +87,7 @@ export default function ManageTasksPage() {
             <div>
               {!task.completed && (
                 <button
-                  onClick={() =>markAsComplete(task.id, task.title)}
+                  onClick={() => markAsComplete(task.id, task.title)}
                   style={{
                     backgroundColor: '#4CAF50',
                     color: '#fff',
@@ -114,10 +95,8 @@ export default function ManageTasksPage() {
                     padding: '8px 16px',
                     borderRadius: '5px',
                     cursor: 'pointer',
-                    transition: 'background-color 0.3s',
+                    marginRight: '10px',
                   }}
-                  onMouseEnter={(e) => (e.target.style.backgroundColor = '#388E3C')}
-                  onMouseLeave={(e) => (e.target.style.backgroundColor = '#4CAF50')}
                 >
                   Mark as Complete
                 </button>
@@ -130,12 +109,8 @@ export default function ManageTasksPage() {
                   border: 'none',
                   padding: '8px 16px',
                   borderRadius: '5px',
-                  marginLeft: '10px',
                   cursor: 'pointer',
-                  transition: 'background-color 0.3s',
                 }}
-                onMouseEnter={(e) => (e.target.style.backgroundColor = '#e53935')}
-                onMouseLeave={(e) => (e.target.style.backgroundColor = '#F44336')}
               >
                 Delete
               </button>
@@ -144,7 +119,7 @@ export default function ManageTasksPage() {
         ))
       )}
 
-      {/* Modal to show task completion message */}
+      {/* Completion Modal */}
       {showModal && (
         <div
           style={{
@@ -173,7 +148,7 @@ export default function ManageTasksPage() {
               Task "{completedTask}" is marked as complete!
             </h3>
             <button
-              onClick={closeModal}
+              onClick={() => setShowModal(false)}
               style={{
                 backgroundColor: '#4CAF50',
                 color: '#fff',

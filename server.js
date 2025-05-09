@@ -25,12 +25,23 @@ db.connect(err => {
 // Create task
 app.post('/tasks', (req, res) => {
   const { title, description } = req.body;
+
+  // Validate the title
   if (!title) return res.status(400).json({ error: 'Title is required' });
 
   const sql = 'INSERT INTO tasks (title, description) VALUES (?, ?)';
-  db.query(sql, [title, description], (err, result) => {
-    if (err) return res.status(500).json({ error: 'Database error' });
 
+  // Log request body to verify if it's coming in correctly
+  console.log('Adding Task:', { title, description });
+
+  db.query(sql, [title, description], (err, result) => {
+    if (err) {
+      // Log the error and send a response with error details
+      console.error('Database Error:', err.message);
+      return res.status(500).json({ error: 'Database error', details: err.message });
+    }
+
+    // Create new task object with inserted data
     const newTask = {
       id: result.insertId,
       title,
@@ -38,9 +49,12 @@ app.post('/tasks', (req, res) => {
       completed: false,
       created_at: new Date().toISOString()
     };
+
+    // Send a successful response with the new task
     res.status(201).json(newTask);
   });
 });
+
 
 // Get all tasks
 app.get('/tasks', (req, res) => {
